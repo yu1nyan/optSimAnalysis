@@ -7,6 +7,7 @@ ROOTファイル名に関する制約：小文字の ".root" を含んでいな�
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <regex>
 
 // C headers
 #include <stdio.h>
@@ -33,9 +34,17 @@ ROOTファイル名に関する制約：小文字の ".root" を含んでいな�
 
 using namespace std;
 
-const string histNameZ[] = {"npz02", "npz12", "npz22", "npz01", "npz11", "npz21", "npz00", "npz10", "npz20"};
+const int NChZ = 9;
+const int NChZAround = 8;
+const string histNameZ[] = { "npz02", "npz12", "npz22", "npz01", "npz11", "npz21", "npz00", "npz10", "npz20" };
+const string histNameZAround[] = { "npz02", "npz12", "npz22", "npz01", "npz21", "npz00", "npz10", "npz20" };
+const string histNameZCenter = "npz11";
 const string CubeGeometryName[] = { "UpperLeft", "Above", "UpperRight", "Left", "Center", "Right", "LowerLeft", "Below", "LowerRight" };
+const string CubeGeometryNameAround[] = { "UpperLeft", "Above", "UpperRight", "Left", "Right", "LowerLeft", "Below", "LowerRight" };
+const string CubeGeometryNameCenter = "Center";
 const string CubeGeometryTitle[] = { "upper left", "above", "upper right", "left", "center", "right", "lower left", "below", "lower right" };
+const string CubeGeometryTitleAround[] = { "upper left", "above", "upper right", "left", "right", "lower left", "below", "lower right" };
+const string CubeGeometryTitleCenter = "center";
 
 void optSimAnalysis(string rootFileDirectory)
 {
@@ -60,23 +69,57 @@ void optSimAnalysis(string rootFileDirectory)
         } while (dent != NULL);
         closedir(dp);
     }
-    const int NHodoXY = sqrt(rootFileNames.size()); // X方向、Y方向のホドスコープの本数
 
+    const int NCellOneSide = sqrt(rootFileNames.size()); // XY方向の一辺のセルの数
+
+
+    // ヒストグラム定義
+    TH1D* hPEZCenter;
+    TH1D* hPEZAround[NChZAround];
+    TH1D* hCrosstalkZ[NChZAround];
+    TH1D* hCrosstalkZEachCell[NChZAround][NCellOneSide][NCellOneSide];
+    TH2D* hCrosstalkMap[NChZAround];
+
+    TGraph* scatterCTZ[NChZAround];
+    TH2D* hCrosstalkScatterZ[NChZAround];
+    TH2D* hCrosstalkScatterZEachCell[NChZAround][NCellOneSide][NCellOneSide];
+
+
+    // rootファイル1つがホドスコープ1セルに対応
     for (string rootFileName : rootFileNames)
     {
+        // ファイルオープン・ツリー取得
         TString rootFileDir = TString::Format("%s/%s", rootFileDirectory.c_str(), rootFileName.c_str());
         TFile* file = TFile::Open(rootFileDir);
-        TTree* tree = (TTree *) file->Get("cube");
-        double npz11;
+        TTree* tree = (TTree*) file->Get("cube");
 
-        tree->SetBranchAddress("npz11", &npz11);
-        cout << tree->GetEntries() << endl;
-        cout << tree->GetEntry(0) << endl;
-        cout << npz11 << endl;
+        // ホドスコープセル位置（ビームヒット位置）の取得
+        smatch results;
+        int cellPosition[2];
+        if (regex_match(rootFileName, results, regex("root_X(\\d+)_Y(\\d+).root")))
+        {
+            cellPosition[0] = stoi(results[1].str());
+            cellPosition[1] = stoi(results[2].str());
+        }
+        cout << cellPosition[0] << endl;
 
-        cont int NEvents = tree->GetEntries();
+        int peZCenter;
+        tree->SetBranchAddress(histNameZCenter.c_str(), &peZCenter);
+        int peZAround[NChZAround];
+        for (int i = 0; i < NChZAround; i++)
+        {
+            tree->SetBranchAddress(histNameZ[i].c_str(), &peZAround[i]);
+        }
+
+
+        // cout << tree->GetEntries() << endl;
+        // cout << tree->GetEntry(0) << endl;
+        // cout << pez[0] << endl;
+
+        const int NEvents = tree->GetEntries();
         for (int evt = 0; evt < NEvents; evt++)
         {
+            tree->GetEntry(evt);
         }
 
         file->Close();
