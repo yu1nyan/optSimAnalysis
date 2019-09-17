@@ -46,6 +46,16 @@ const string CubeGeometryTitle[] = { "upper left", "above", "upper right", "left
 const string CubeGeometryTitleAround[] = { "upper left", "above", "upper right", "left", "right", "lower left", "below", "lower right" };
 const string CubeGeometryTitleCenter = "center";
 
+const double MinPECenter = -0.5;
+const double MaxPECenter = 99.5;
+const int NBinPECenter = 100;
+const double MinPEAround = -0.5;
+const double MaxPEAround = 9.5;
+const int NBinPEAround = 10;
+const double MinCT = -0.1;
+const double MaxCT = 1.0;
+const double NBinCT = 110;
+
 void optSimAnalysis(string rootFileDirectory)
 {
     // ROOTファイル名の取得
@@ -74,11 +84,16 @@ void optSimAnalysis(string rootFileDirectory)
 
 
     // ヒストグラム定義
-    TH1D* hPEZCenter;
+    TH1D* hPEZCenter = new TH1D("hPECenter", "PE Center (using Z readout);Light yield (p.e.);Number of events", NBinPECenter, MinPECenter, MaxPECenter);
     TH1D* hPEZAround[NChZAround];
     TH1D* hCrosstalkZ[NChZAround];
     TH1D* hCrosstalkZEachCell[NChZAround][NCellOneSide][NCellOneSide];
     TH2D* hCrosstalkMap[NChZAround];
+    for(int i=0; i<NChZAround; i++)
+    {
+        TString histName = TString::Format("hPE%s", CubeGeometryNameAround[i]);
+    }
+
 
     TGraph* scatterCTZ[NChZAround];
     TH2D* hCrosstalkScatterZ[NChZAround];
@@ -101,7 +116,6 @@ void optSimAnalysis(string rootFileDirectory)
             cellPosition[0] = stoi(results[1].str());
             cellPosition[1] = stoi(results[2].str());
         }
-        cout << cellPosition[0] << endl;
 
         int peZCenter;
         tree->SetBranchAddress(histNameZCenter.c_str(), &peZCenter);
@@ -124,7 +138,6 @@ void optSimAnalysis(string rootFileDirectory)
 
         file->Close();
     }
-    // string rootFileName = rootFileDirectory + "/root_X0_Y0.root";
 }
 
 int main(int argc, char** argv)
