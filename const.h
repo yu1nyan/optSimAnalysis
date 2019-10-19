@@ -1,0 +1,40 @@
+const int NChZ = 9;
+const int NChZAround = 8;
+const string histNameZNumberCenter = "11";
+const string histNameZNumberAround[] = {"02", "12", "22", "01", "21", "00", "10", "20"};
+const string histNameZNPE = "npz";
+// const string histNameZ[] = { "npz02", "npz12", "npz22", "npz01", "npz11", "npz21", "npz00", "npz10", "npz20" };
+const string histNameZAround[] = { "npz02", "npz12", "npz22", "npz01", "npz21", "npz00", "npz10", "npz20" };
+const string histNameZCenter = "npz11";
+// const string CubeGeometryName[] = { "UpperLeft", "Upper", "UpperRight", "Left", "Center", "Right", "LowerLeft", "Lower", "LowerRight" };
+const string CubeGeometryNameAround[] = { "UpperLeft", "Upper", "UpperRight", "Left", "Right", "LowerLeft", "Lower", "LowerRight" };
+// const string CubeGeometryNameCenter = "Center";
+// const string CubeGeometryTitle[] = { "upper left", "upper", "upper right", "left", "center", "right", "lower left", "lower", "lower right" };
+const string CubeGeometryTitleAround[] = { "upper left", "upper", "upper right", "left", "right", "lower left", "lower", "lower right" };
+// const string CubeGeometryTitleCenter = "center";
+
+const string histNameZHitTime = "hittimez";
+
+const string histNameCubeIn = "cubeinpos";
+const string histNameCubeOut = "cubeoutpos";
+
+const string histNameCoord[] = {"x", "y", "z"};
+
+const double MinPECenter = -1.5;
+const double MaxPECenter = 108.5;
+const int NBinPECenter = 110;
+const double MinPEAround = -0.5;
+const double MaxPEAround = 9.5;
+const int NBinPEAround = 10;
+const double MinCT = -0.1;
+const double MaxCT = 1.0;
+const double NBinCT = 110;
+const double MinCTCellMap = 0.0;
+const double MaxCTCellMap = 10.0;
+
+const double CubeEdgeXY1 = -5.0; // mm
+const double CubeEdgeXY2 = 5.0;
+// const double CubeEdgeY1 = -5.0;
+// const double CubeEdgeY2 = 5.0;
+const double CubeEdgeZup = 5.0;
+const double CubeEdgeZdown = -5.0;
