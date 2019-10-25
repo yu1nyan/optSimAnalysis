@@ -157,7 +157,10 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     TH2D* hCrosstalkScatterZ[NChZAround];
     TH2D* hCrosstalkScatterZEachCell[NChZAround][NCellOneSide][NCellOneSide];
 
-    TH1D* hHitTimeDiff[NChZAround];
+    // hit time
+    TH1D* hHitTimeZCenter = new TH1D("hHitTimeCenter", "Photon deteciton time: center (using Z readout);time (ns);Number of events", 100, 15, 25);
+    TH1D* hHitTimeZAround[NChZAround];
+    TH1D* hHitTimeZDiff[NChZAround];
 
     for (int i = 0; i < NChZAround; i++)
     {
@@ -204,9 +207,15 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             }
         }
 
+        // hit time
+        histName = TString::Format("hHitTime%s", CubeGeometryNameAround[i].c_str());
+        histAxis = TString::Format("Photon detection time: %s (using Z readout);time (ns);Number of events", CubeGeometryTitleAround[i].c_str());
+        hHitTimeZAround[i] = new TH1D(histName, histAxis, 100, 0, 100);
+
+
         histName = TString::Format("hHitTimeDiff%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("Hit time difference %s - center (using Z readout);Hit time diff %s - center (ns);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        hHitTimeDiff[i] = new TH1D(histName, histAxis, 70, 0, 70);
+        histAxis = TString::Format("Difference of photon detection time: %s - center (using Z readout);time %s - center (ns);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
+        hHitTimeZDiff[i] = new TH1D(histName, histAxis, 70, 0, 70);
     }
 
 
@@ -236,6 +245,15 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 cout << "Illegal ROOT file name!!" << endl;
                 return;
             }
+        }
+        else if(inputMode == "plane")
+        {
+
+        }
+        else
+        {
+            cout << "Input mode should be \"point\" or \"plane\"." << endl;
+            return;
         }
 
         // ツリーの中身を取り出せるように設定
@@ -306,7 +324,14 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             auto histPosHit = ConvertCellPosition(cellX, cellY);
             hCellHitMapStraight->Fill(get<0>(histPosHit), get<1>(histPosHit));
 
+            // center cube
             hPEZCenter->Fill(peZCenter);
+            if(hittimeZCenter != 0.0)
+            {
+                hHitTimeZCenter->Fill(hittimeZCenter);
+            }
+
+            // cubes around
             for (int i = 0; i < NChZAround; i++)
             {
                 hPEZAround[i]->Fill(peZAround[i]);
@@ -322,12 +347,17 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 hCrosstalkZ[i]->Fill((double) peZAround[i] / (double) peZCenter);
                 hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
 
-                if(hittimeZAround[i] == 0.0)
+
+                if(hittimeZAround[i] != 0.0)
                 {
-                    cout << "evt" << evt << " is skipped (hittimeZ"<< CubeGeometryNameAround[i] << " = 0)."  <<  endl;
+                    hHitTimeZAround[i]->Fill(hittimeZAround[i]);
+                }
+                if(hittimeZAround[i] == 0.0 || hittimeZCenter == 0.0)
+                {
+                    // cout << "evt" << evt << " is skipped (hittimeZ = 0)."  <<  endl;
                     continue;
                 }
-                hHitTimeDiff[i]->Fill(hittimeZAround[i] - hittimeZCenter);
+                hHitTimeZDiff[i]->Fill(hittimeZAround[i] - hittimeZCenter);
             }
         }
 
@@ -363,6 +393,10 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     TString outputFileDir = TString::Format("%s/PECenter.%s", rootFileDirectory.c_str(), outputFileType.c_str());
     SaveHist(hPEZCenter, outputFileDir);
 
+    outputFileDir = TString::Format("%s/HitTimeCenter.%s", rootFileDirectory.c_str(), outputFileType.c_str());
+    SaveHist(hHitTimeZCenter, outputFileDir);
+
+
     for (int i = 0; i < NChZAround; i++)
     {
         outputFileDir = TString::Format("%s/PEAround%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
@@ -380,8 +414,11 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         outputFileDir = TString::Format("%s/CrosstalkMap%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
         SaveHodoMap(hCrosstalkMap[i], outputFileDir, NCellOneSide);
 
+        outputFileDir = TString::Format("%s/HitTimeAround%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        SaveHist(hHitTimeZAround[i], outputFileDir);
+
         outputFileDir = TString::Format("%s/HitTimeDiff%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
-        SaveHist(hHitTimeDiff[i], outputFileDir);
+        SaveHist(hHitTimeZDiff[i], outputFileDir);
     }
 
     outputFileDir = TString::Format("%s/CellHitMapStraight.%s", rootFileDirectory.c_str(), outputFileType.c_str());
