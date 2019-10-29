@@ -158,7 +158,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     TH2D* hCrosstalkScatterZEachCell[NChZAround][NCellOneSide][NCellOneSide];
 
     // hit time
-    TH1D* hHitTimeZCenter = new TH1D("hHitTimeCenter", "Photon deteciton time: center (using Z readout);time (ns);Number of events", 100, 15, 25);
+    TH1D* hHitTimeZCenter = new TH1D("hHitTimeCenter", "Photon deteciton time: center (using Z readout);time (ns);Number of events", 100, 0, 100);
     TH1D* hHitTimeZAround[NChZAround];
     TH1D* hHitTimeZDiff[NChZAround];
 
