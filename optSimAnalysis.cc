@@ -97,8 +97,8 @@ void SaveGraph(TGraph* graph, TString outputFileDir)
 void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide, string outputFileType="png")
 {
     // Make result directories
-    const string CrosstalkDir = rootFileDirectory + "/crosstalkEachCell/";
-    mkdir(CrosstalkDir.c_str(), 0777);
+    const string EachCellDir = rootFileDirectory + "/crosstalkEachCell/";
+    mkdir(EachCellDir.c_str(), 0777);
 
 
     // ROOTファイル名の取得
@@ -419,6 +419,19 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
         outputFileDir = TString::Format("%s/HitTimeDiff%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
         SaveHist(hHitTimeZDiff[i], outputFileDir);
+
+        // each cell
+        for(int x=0; x<NCellOneSide; x++)
+        {
+            for(int y=0; y<NCellOneSide; y++)
+            {
+                outputFileDir = TString::Format("%s/Crosstalk%d-X%dY%d.%s", EachCellDir.c_str(), i, x, y, outputFileType.c_str());
+                SaveHist(hCrosstalkZEachCell[i][x][y], outputFileDir);
+
+                outputFileDir = TString::Format("%s/CrosstalkScatterHist%d-X%dY%d.%s", EachCellDir.c_str(), i, x, y, outputFileType.c_str());
+                SaveHist(hCrosstalkScatterZEachCell[i][x][y], outputFileDir);
+            }
+        }
     }
 
     outputFileDir = TString::Format("%s/CellHitMapStraight.%s", rootFileDirectory.c_str(), outputFileType.c_str());
