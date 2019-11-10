@@ -49,7 +49,7 @@ tuple<int, int> ConvertCellPosition(int cellX, int cellY)
     return forward_as_tuple(cellX + 1, cellY + 1);
 }
 
-void SaveHist(TH1* hist, TString outputFileDir, TString drawOption="", bool setLogy=false, int histWidth=0, int histHeight=0)
+void SaveHist(TH1* hist, TString outputFileDir, TString drawOption = "", bool setLogy = false, int histWidth = 0, int histHeight = 0)
 {
     TCanvas* canvas;
     if (histWidth == 0 || histHeight == 0)
@@ -94,7 +94,7 @@ void SaveGraph(TGraph* graph, TString outputFileDir)
 // inputMode
 // "point": 点線源
 // "plane": 広がりを持ったビーム（Plane, Beamなど）
-void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide, string outputFileType="png")
+void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide, string outputFileType = "png")
 {
     // Make result directories
     const string CrosstalkDir = rootFileDirectory + "/crosstalkEachCell/";
@@ -221,6 +221,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
 
     int allevt = 0; // scatter plot 用
+    int nEvt2ndHit[NChZAround] = {};
     for (string rootFileName : rootFileNames)
     {
         // ファイルオープン・ツリー取得
@@ -231,7 +232,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // セル位置取得（pointのとき）
         int cellX = 0;
         int cellY = 0;
-        if(inputMode == "point")
+        if (inputMode == "point")
         {
             smatch results;
 
@@ -246,9 +247,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 return;
             }
         }
-        else if(inputMode == "plane")
+        else if (inputMode == "plane")
         {
-
         }
         else
         {
@@ -263,10 +263,12 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         tree->SetBranchAddress((histNameZHitTime + histNameZNumberCenter).c_str(), &hittimeZCenter);
         double peZAround[NChZAround];
         double hittimeZAround[NChZAround];
+        // int secondParticleHit[NChZAround];
         for (int i = 0; i < NChZAround; i++)
         {
             tree->SetBranchAddress((histNameZNPE + histNameZNumberAround[i]).c_str(), &peZAround[i]);
             tree->SetBranchAddress((histNameZHitTime + histNameZNumberAround[i]).c_str(), &hittimeZAround[i]);
+            // tree->SetBranchAddress((histName2ndParticleHit + CubeGeometryNameAround[i]).c_str(), &secondParticleHit[i]);
         }
 
         double posCubeIn[3];
@@ -278,55 +280,62 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         }
 
 
-
         // イベントループ
         const int NEvents = tree->GetEntries();
+        bool goodEventForOverallCrosstalk;
         for (int evt = 0; evt < NEvents; evt++)
         {
             tree->GetEntry(evt);
+            goodEventForOverallCrosstalk = false;
 
 
             // ホドスコープセル位置（ビームヒット位置）の取得（inputMode=planeのとき）
-            if(inputMode == "plane")
+            if (inputMode == "plane")
             {
                 // cellX or cellYが領域外ならばcontinueする
                 bool isOut = false;
-                for (int i=0; i<2; i++)
+                for (int i = 0; i < 2; i++)
                 {
-                    if(posCubeIn[i] <= CubeEdgeXY1 || posCubeIn[i] >= CubeEdgeXY2) isOut = true;
-                    if(posCubeOut[i] <= CubeEdgeXY1 || posCubeOut[i] >= CubeEdgeXY2) isOut = true;
+                    if (posCubeIn[i] <= CubeEdgeXY1 || posCubeIn[i] >= CubeEdgeXY2)
+                        isOut = true;
+                    if (posCubeOut[i] <= CubeEdgeXY1 || posCubeOut[i] >= CubeEdgeXY2)
+                        isOut = true;
                 }
-                if(isOut)
+                if (isOut)
                 {
-                    cout << "evt" << evt << " is skipped (Beam hit position is out of range)." << endl;
+                    cout << "evt" << allevt << " is skipped (Beam hit position is out of range)." << endl;
                     continue;
                 }
                 // 上流と下流でセル位置が違えばcontinueする
                 int cellUp[2];
                 int cellDown[2];
                 bool isNotSame = false;
-                for (int i=0; i<2; i++)
+                for (int i = 0; i < 2; i++)
                 {
                     cellUp[i] = floor((posCubeIn[i] - CubeEdgeXY1) / (CubeEdgeXY2 - CubeEdgeXY1) * nCellOneSide);
                     cellDown[i] = floor((posCubeOut[i] - CubeEdgeXY1) / (CubeEdgeXY2 - CubeEdgeXY1) * nCellOneSide);
-                    if(cellUp[i] != cellDown[i]) isNotSame = true;
+                    if (cellUp[i] != cellDown[i])
+                        isNotSame = true;
                 }
-                if(isNotSame)
+                if (isNotSame)
                 {
-                    cout << "evt" << evt << " is skipped (Beam hit cell is not same in up & downstream)." << endl;
+                    cout << "evt" << allevt << " is skipped (Beam hit cell is not same in up & downstream)." << endl;
                     continue;
                 }
                 cellX = cellUp[0];
                 cellY = cellUp[1];
+
+                if (posCubeIn[0] >= OmitXY1 && posCubeIn[0] <= OmitXY2 && posCubeIn[1] >= OmitXY1 && posCubeIn[1] <= OmitXY2)
+                    goodEventForOverallCrosstalk = true;
             }
 
 
             auto histPosHit = ConvertCellPosition(cellX, cellY);
-            hCellHitMapStraight->Fill(get<0>(histPosHit), get<1>(histPosHit));
+            hCellHitMapStraight->Fill(get<0> (histPosHit), get<1> (histPosHit));
 
             // center cube
             hPEZCenter->Fill(peZCenter);
-            if(hittimeZCenter != 0.0)
+            if (hittimeZCenter != 0.0)
             {
                 hHitTimeZCenter->Fill(hittimeZCenter);
             }
@@ -335,30 +344,47 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             for (int i = 0; i < NChZAround; i++)
             {
                 hPEZAround[i]->Fill(peZAround[i]);
-                scatterCTZ[i]->SetPoint(allevt, peZCenter, peZAround[i]);
-                hCrosstalkScatterZ[i]->Fill(peZCenter, peZAround[i]);
+
+                // secondary particle
+                // if (secondParticleHit[i] == 1)
+                // {
+                //     // cout << "secondary particle hit!" << endl;
+                //     // return;
+                //     nEvt2ndHit[i]++;
+                // }
+
+                // crosstalk
+                if (goodEventForOverallCrosstalk)
+                {
+                    // scatterCTZ[i]->SetPoint(allevt, peZCenter, peZAround[i]);
+                    hCrosstalkScatterZ[i]->Fill(peZCenter, peZAround[i]);
+                }
                 hCrosstalkScatterZEachCell[i][cellX][cellY]->Fill(peZCenter, peZAround[i]);
-                allevt++;
                 if (peZCenter == 0)
                 {
-                    cout << "evt" << evt << " is skipped (peZCenter = 0)." << endl;
+                    // cout << "evt" << allevt << " is skipped (peZCenter = 0)." << endl;
                     continue;
                 }
-                hCrosstalkZ[i]->Fill((double) peZAround[i] / (double) peZCenter);
+                if (goodEventForOverallCrosstalk)
+                {
+                    hCrosstalkZ[i]->Fill((double) peZAround[i] / (double) peZCenter);
+                }
                 hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
 
 
-                if(hittimeZAround[i] != 0.0)
+                if (hittimeZAround[i] != 0.0)
                 {
                     hHitTimeZAround[i]->Fill(hittimeZAround[i]);
                 }
-                if(hittimeZAround[i] == 0.0 || hittimeZCenter == 0.0)
+                if (hittimeZAround[i] == 0.0 || hittimeZCenter == 0.0)
                 {
-                    // cout << "evt" << evt << " is skipped (hittimeZ = 0)."  <<  endl;
+                    // cout << "evt" << allevt << " is skipped (hittimeZ = 0)."  <<  endl;
                     continue;
                 }
                 hHitTimeZDiff[i]->Fill(hittimeZAround[i] - hittimeZCenter);
             }
+
+            allevt++;
         }
 
         file->Close();
@@ -405,8 +431,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         outputFileDir = TString::Format("%s/Crosstalk%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
         SaveHist(hCrosstalkZ[i], outputFileDir, "", true);
 
-        outputFileDir = TString::Format("%s/CrosstalkScatterPlot%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
-        SaveGraph(scatterCTZ[i], outputFileDir);
+        // outputFileDir = TString::Format("%s/CrosstalkScatterPlot%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        // SaveGraph(scatterCTZ[i], outputFileDir);
 
         outputFileDir = TString::Format("%s/CrosstalkScatterHist%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
         SaveHist(hCrosstalkScatterZ[i], outputFileDir, "colz");
@@ -424,6 +450,10 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     outputFileDir = TString::Format("%s/CellHitMapStraight.%s", rootFileDirectory.c_str(), outputFileType.c_str());
     SaveHodoMap(hCellHitMapStraight, outputFileDir, NCellOneSide);
 
+    for (int i=0; i<NChZAround; i++)
+    {
+        cout << "Secondary hit for " << CubeGeometryTitleAround[i] << ": " << nEvt2ndHit[i] << endl;
+    }
 }
 
 int main(int argc, char** argv)
@@ -453,6 +483,11 @@ int main(int argc, char** argv)
 
     if (argc == 3)
     {
+        if(inputMode == "plane")
+        {
+            cerr << "Number of cell should be set when input mode is plane!" << endl;;
+            return 1;
+        }
         optSimAnalysis(rootFileDirectory, inputMode, 0);
     }
     else if (argc == 4)

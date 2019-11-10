@@ -18,6 +18,8 @@ const string histNameZHitTime = "hittimez";
 const string histNameCubeIn = "cubeinpos";
 const string histNameCubeOut = "cubeoutpos";
 
+const string histName2ndParticleHit = "2ndParticleHit";
+
 const string histNameCoord[] = {"x", "y", "z"};
 
 const double MinPECenter = -1.5;
@@ -34,6 +36,8 @@ const double MaxCTCellMap = 10.0;
 
 const double CubeEdgeXY1 = -5.0; // mm
 const double CubeEdgeXY2 = 5.0;
+const double OmitXY1 = -3.4;    //mm
+const double OmitXY2 = 3.4;
 // const double CubeEdgeY1 = -5.0;
 // const double CubeEdgeY2 = 5.0;
 const double CubeEdgeZup = 5.0;
