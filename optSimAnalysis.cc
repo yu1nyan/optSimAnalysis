@@ -97,7 +97,10 @@ void SaveGraph(TGraph* graph, TString outputFileDir)
 void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide, string outputFileType = "png")
 {
     // Make result directories
-    const string EachCellDir = rootFileDirectory + "/crosstalkEachCell/";
+
+    const string ResultDir = rootFileDirectory + "/result/";
+    mkdir(ResultDir.c_str(), 0777);
+    const string EachCellDir = ResultDir + "/crosstalkEachCell/";
     mkdir(EachCellDir.c_str(), 0777);
 
 
@@ -127,7 +130,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     {
         NCellOneSide = sqrt(rootFileNames.size());             // XY方向の一辺のセルの数
     }
-    else if (inputMode == "plane")
+    else if (inputMode == "plane" || inputMode == "beam")
     {
         NCellOneSide = nCellOneSide;
     }
@@ -248,7 +251,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 return;
             }
         }
-        else if (inputMode == "plane")
+        else if (inputMode == "plane" || inputMode == "beam")
         {
         }
         else
@@ -423,34 +426,34 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
 
     // Draw histograms
-    TString outputFileDir = TString::Format("%s/PECenter.%s", rootFileDirectory.c_str(), outputFileType.c_str());
+    TString outputFileDir = TString::Format("%s/PECenter.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHist(hPEZCenter, outputFileDir);
 
-    outputFileDir = TString::Format("%s/HitTimeCenter.%s", rootFileDirectory.c_str(), outputFileType.c_str());
+    outputFileDir = TString::Format("%s/HitTimeCenter.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHist(hHitTimeZCenter, outputFileDir);
 
 
     for (int i = 0; i < NChZAround; i++)
     {
-        outputFileDir = TString::Format("%s/PEAround%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        outputFileDir = TString::Format("%s/PEAround%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHist(hPEZAround[i], outputFileDir);
 
-        outputFileDir = TString::Format("%s/Crosstalk%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        outputFileDir = TString::Format("%s/Crosstalk%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHist(hCrosstalkZ[i], outputFileDir, "", true);
 
-        // outputFileDir = TString::Format("%s/CrosstalkScatterPlot%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        // outputFileDir = TString::Format("%s/CrosstalkScatterPlot%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         // SaveGraph(scatterCTZ[i], outputFileDir);
 
-        outputFileDir = TString::Format("%s/CrosstalkScatterHist%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        outputFileDir = TString::Format("%s/CrosstalkScatterHist%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHist(hCrosstalkScatterZ[i], outputFileDir, "colz");
 
-        outputFileDir = TString::Format("%s/CrosstalkMap%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        outputFileDir = TString::Format("%s/CrosstalkMap%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHodoMap(hCrosstalkMap[i], outputFileDir, NCellOneSide);
 
-        outputFileDir = TString::Format("%s/HitTimeAround%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        outputFileDir = TString::Format("%s/HitTimeAround%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHist(hHitTimeZAround[i], outputFileDir);
 
-        outputFileDir = TString::Format("%s/HitTimeDiff%d.%s", rootFileDirectory.c_str(), i, outputFileType.c_str());
+        outputFileDir = TString::Format("%s/HitTimeDiff%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHist(hHitTimeZDiff[i], outputFileDir);
 
         // each cell
@@ -467,7 +470,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // }
     }
 
-    outputFileDir = TString::Format("%s/CellHitMapStraight.%s", rootFileDirectory.c_str(), outputFileType.c_str());
+    outputFileDir = TString::Format("%s/CellHitMapStraight.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHodoMap(hCellHitMapStraight, outputFileDir, NCellOneSide);
 
     for (int i=0; i<NChZAround; i++)
@@ -504,9 +507,9 @@ int main(int argc, char** argv)
 
     if (argc == 3)
     {
-        if(inputMode == "plane")
+        if(inputMode == "plane" || inputMode == "beam")
         {
-            cerr << "Number of cell should be set when input mode is plane!" << endl;;
+            cerr << "Number of cell should be set when input mode is plane or beam!" << endl;;
             return 1;
         }
         optSimAnalysis(rootFileDirectory, inputMode, 0);
