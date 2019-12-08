@@ -24,8 +24,8 @@ const string histName2ndParticleFromHodo = "2ndFromHodoTo";
 const string histNameCoord[] = {"x", "y", "z"};
 
 const double MinPECenter = -1.5;
-const double MaxPECenter = 108.5;
-const int NBinPECenter = 110;
+const double MaxPECenter = 98.5;
+const int NBinPECenter = 100;
 const double MinPEAround = -0.5;
 const double MaxPEAround = 9.5;
 const int NBinPEAround = 10;
@@ -43,3 +43,5 @@ const double OmitXY2 = 3.4;
 // const double CubeEdgeY2 = 5.0;
 const double CubeEdgeZup = 5.0;
 const double CubeEdgeZdown = -5.0;
+
+const double StatsBoxSize[] = {0.65, 0.98, 0.65, 0.92};

@@ -49,6 +49,17 @@ tuple<int, int> ConvertCellPosition(int cellX, int cellY)
     return forward_as_tuple(cellX + 1, cellY + 1);
 }
 
+void changeStatsBoxSize(TH1* hist, double x1, double x2, double y1, double y2)
+{
+    gPad->Update();
+    TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
+    st->SetX1NDC(x1);
+    st->SetX2NDC(x2);
+    st->SetY1NDC(y1);
+    st->SetY2NDC(y2);
+    st->Draw();
+}
+
 void SaveHist(TH1* hist, TString outputFileDir, TString drawOption = "", bool setLogy = false, int histWidth = 0, int histHeight = 0)
 {
     TCanvas* canvas;
@@ -89,6 +100,22 @@ void SaveGraph(TGraph* graph, TString outputFileDir)
     graph->Draw("AP");
     canvas->SaveAs(outputFileDir);
     canvas->Clear();
+}
+
+void changeOptionStat(TH1* hist, int option)
+{
+    gPad->Update();
+    TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
+    st->SetOptStat(option);
+    st->Draw();
+}
+
+void changeOptionFit(TH1* hist, int option)
+{
+    gPad->Update();
+    TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
+    st->SetOptFit(option);
+    st->Draw();
 }
 
 // inputMode
@@ -170,7 +197,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // Light yield
         TString histName = TString::Format("hPE%s", CubeGeometryNameAround[i].c_str());
         TString histAxis = TString::Format("Light yield of %s cube (using Z readout);Light yield (p.e.);Number of events", CubeGeometryTitleAround[i].c_str());
-        hPEZAround[i] = new TH1D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter);
+        hPEZAround[i] = new TH1D(histName, histAxis, NBinPEAround, MinPEAround, MaxPEAround);
 
         // Crosstalk
         histName = TString::Format("hCrosstalk%s", CubeGeometryNameAround[i].c_str());
@@ -220,6 +247,12 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         histAxis = TString::Format("Difference of photon detection time: %s - center (using Z readout);time %s - center (ns);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hHitTimeZDiff[i] = new TH1D(histName, histAxis, 70, 0, 70);
     }
+
+    const double MinPgun = -20;   // mm
+    const double MaxPgun = 20;
+    const int NBinPgun = 40;
+    TH1D* hPgunX = new TH1D("hPgunX", "pgunX;X (mm);Number of events", NBinPgun, MinPgun, MaxPgun);
+    TH1D* hPgunY = new TH1D("hPgunY", "pgunY;Y (mm);Number of events", NBinPgun, MinPgun, MaxPgun);
 
 
 
@@ -285,6 +318,9 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             tree->SetBranchAddress((histNameCubeOut + histNameCoord[i]).c_str(), &posCubeOut[i]);
         }
 
+        double pgunX, pgunY;
+        tree->SetBranchAddress("x", &pgunX);
+        tree->SetBranchAddress("y", &pgunY);
 
         // イベントループ
         const int NEvents = tree->GetEntries();
@@ -292,12 +328,27 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         for (int evt = 0; evt < NEvents; evt++)
         {
             tree->GetEntry(evt);
+
+            // Initialize
             goodEventForOverallCrosstalk = false;
 
 
+            // pgunの位置を記録
+            hPgunX->Fill(pgunX);
+            hPgunY->Fill(pgunY);
+
+
             // ホドスコープセル位置（ビームヒット位置）の取得（inputMode=planeのとき）
-            if (inputMode == "plane")
+            if (inputMode == "plane" || inputMode == "beam")
             {
+                // z=0ならばキューブにヒットしたなかったイベントなのでcontinue
+                if(posCubeIn[2] == 0 || posCubeOut[2] == 0)
+                {
+                    // cout << "evt" << allevt << " is skipped (Beam is not hit to the cube)." << endl;
+                    ++allevt;
+                    continue;
+                }
+
                 // cellX or cellYが領域外ならばcontinueする
                 bool isOut = false;
                 for (int i = 0; i < 2; i++)
@@ -309,7 +360,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 }
                 if (isOut)
                 {
-                    cout << "evt" << allevt << " is skipped (Beam hit position is out of range)." << endl;
+                    // cout << "evt" << allevt << " is skipped (Beam hit position is out of range)." << endl;
+                    ++allevt;
                     continue;
                 }
                 // 上流と下流でセル位置が違えばcontinueする
@@ -325,7 +377,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 }
                 if (isNotSame)
                 {
-                    cout << "evt" << allevt << " is skipped (Beam hit cell is not same in up & downstream)." << endl;
+                    // cout << "evt" << allevt << " is skipped (Beam hit cell is not same in up & downstream)." << endl;
+                    ++allevt;
                     continue;
                 }
                 cellX = cellUp[0];
@@ -340,7 +393,10 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             hCellHitMapStraight->Fill(get<0> (histPosHit), get<1> (histPosHit));
 
             // center cube
-            hPEZCenter->Fill(peZCenter);
+            if(goodEventForOverallCrosstalk)
+            {
+                hPEZCenter->Fill(peZCenter);
+            }
             if (hittimeZCenter != 0.0)
             {
                 hHitTimeZCenter->Fill(hittimeZCenter);
@@ -427,6 +483,11 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
     // Draw histograms
     TString outputFileDir = TString::Format("%s/PECenter.%s", ResultDir.c_str(), outputFileType.c_str());
+    double maxBin = hPEZCenter->GetMaximumBin() + MinPECenter;
+    hPEZCenter->Fit("landau", "", "", maxBin-7, maxBin+12);
+    changeStatsBoxSize(hPEZCenter, 0.65, 0.98, 0.65, 0.92);
+    changeOptionStat(hPEZCenter, 10);
+    changeOptionFit(hPEZCenter, 110);
     SaveHist(hPEZCenter, outputFileDir);
 
     outputFileDir = TString::Format("%s/HitTimeCenter.%s", ResultDir.c_str(), outputFileType.c_str());
@@ -445,6 +506,10 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // SaveGraph(scatterCTZ[i], outputFileDir);
 
         outputFileDir = TString::Format("%s/CrosstalkScatterHist%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
+        hCrosstalkScatterZ[i]->Draw("colz");
+        gPad->SetRightMargin(0.15);
+        changeStatsBoxSize(hCrosstalkScatterZ[i], 0.55, 0.85, 0.6, 0.92);
+        // changeOptionStat(hCrosstalkScatterZ[i], 0);
         SaveHist(hCrosstalkScatterZ[i], outputFileDir, "colz");
 
         outputFileDir = TString::Format("%s/CrosstalkMap%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
@@ -472,6 +537,11 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
     outputFileDir = TString::Format("%s/CellHitMapStraight.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHodoMap(hCellHitMapStraight, outputFileDir, NCellOneSide);
+
+    outputFileDir = TString::Format("%s/PgunX.%s", ResultDir.c_str(), outputFileType.c_str());
+    SaveHist(hPgunX, outputFileDir);
+    outputFileDir = TString::Format("%s/PgunY.%s", ResultDir.c_str(), outputFileType.c_str());
+    SaveHist(hPgunY, outputFileDir);
 
     for (int i=0; i<NChZAround; i++)
     {
