@@ -2,3 +2,4 @@
 !*.cc
 !*.h
 !Makefile
+!*.sh
