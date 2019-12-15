@@ -18,9 +18,6 @@ const string histNameZHitTime = "hittimez";
 const string histNameCubeIn = "cubeinpos";
 const string histNameCubeOut = "cubeoutpos";
 
-const string histName2ndParticleFromCenter = "2ndFromCenterTo";
-const string histName2ndParticleFromHodo = "2ndFromHodoTo";
-
 const string histNameCoord[] = {"x", "y", "z"};
 
 const double MinPECenter = -1.5;

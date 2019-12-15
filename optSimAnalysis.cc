@@ -257,8 +257,6 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
 
     int allevt = 0; // scatter plot 用
-    int nEvt2ndHitCenter[NChZAround] = {};
-    int nEvt2ndHitHodo[NChZAround] = {};
     for (string rootFileName : rootFileNames)
     {
         // ファイルオープン・ツリー取得
@@ -300,14 +298,10 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         tree->SetBranchAddress((histNameZHitTime + histNameZNumberCenter).c_str(), &hittimeZCenter);
         double peZAround[NChZAround];
         double hittimeZAround[NChZAround];
-        int secondParticleFromCenter[NChZAround];
-        int secondParticleFromHodo[NChZAround];
         for (int i = 0; i < NChZAround; i++)
         {
             tree->SetBranchAddress((histNameZNPE + histNameZNumberAround[i]).c_str(), &peZAround[i]);
             tree->SetBranchAddress((histNameZHitTime + histNameZNumberAround[i]).c_str(), &hittimeZAround[i]);
-            tree->SetBranchAddress((histName2ndParticleFromCenter + CubeGeometryNameAround[i]).c_str(), &secondParticleFromCenter[i]);
-            tree->SetBranchAddress((histName2ndParticleFromHodo + CubeGeometryNameAround[i]).c_str(), &secondParticleFromHodo[i]);
         }
 
         double posCubeIn[3];
@@ -406,18 +400,6 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             for (int i = 0; i < NChZAround; i++)
             {
                 hPEZAround[i]->Fill(peZAround[i]);
-
-                // secondary particle
-                if (secondParticleFromCenter[i] == 1)
-                {
-                    // cout << "secondary particle hit!" << endl;
-                    // return;
-                    ++nEvt2ndHitCenter[i];
-                }
-                if(secondParticleFromHodo[i] == 1)
-                {
-                    ++nEvt2ndHitHodo[i];
-                }
 
                 // crosstalk
                 if (goodEventForOverallCrosstalk)
@@ -542,12 +524,6 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     SaveHist(hPgunX, outputFileDir);
     outputFileDir = TString::Format("%s/PgunY.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHist(hPgunY, outputFileDir);
-
-    for (int i=0; i<NChZAround; i++)
-    {
-        cout << "Secondary hit for " << CubeGeometryTitleAround[i] << " from center cube: " << nEvt2ndHitCenter[i] << endl;
-        cout << "Secondary hit for " << CubeGeometryTitleAround[i] << " from hodoscope: " << nEvt2ndHitHodo[i] << endl;
-    }
 }
 
 int main(int argc, char** argv)
