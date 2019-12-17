@@ -491,6 +491,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         hCrosstalkScatterZ[i]->Draw("colz");
         gPad->SetRightMargin(0.15);
         changeStatsBoxSize(hCrosstalkScatterZ[i], 0.55, 0.85, 0.6, 0.92);
+        changeOptionStat(hCrosstalkScatterZ[i], 2210);
+        // changeOptionFit(hCrosstalkScatterZ, 111);
         // changeOptionStat(hCrosstalkScatterZ[i], 0);
         SaveHist(hCrosstalkScatterZ[i], outputFileDir, "colz");
 
