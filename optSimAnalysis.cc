@@ -49,6 +49,109 @@ tuple<int, int> ConvertCellPosition(int cellX, int cellY)
     return forward_as_tuple(cellX + 1, cellY + 1);
 }
 
+void drawCubeLine(string config = "", int lineColor = 7)
+{
+    //     const double binmin = -0.1;
+    // const double binmax = 30.;
+
+    // Physical length (mm)
+    const double HoleRadius = 0.75;
+    const double HoleCenterPosFromCubeEdge = 3.0;
+    const double CubeSize = 10.;
+    const double SciFiWidth = 1.67;
+
+    // const double low_x = 0.1 / SciFiWidth + 0.5;
+    const double low_x = 0.5;
+    const double upp_x = low_x + CubeSize / SciFiWidth;
+    const double low_y = low_x;
+    const double upp_y = low_y + CubeSize / SciFiWidth;
+    const double low_fiber_pos = upp_x - (HoleCenterPosFromCubeEdge - HoleRadius) / SciFiWidth;
+    const double upp_fiber_pos = upp_x - (HoleCenterPosFromCubeEdge + HoleRadius) / SciFiWidth;
+    const double Zradius = HoleRadius / SciFiWidth;
+    const double center_pos = HoleCenterPosFromCubeEdge / SciFiWidth;
+
+    // const int lineColor = 7;
+    // 0:white, 1:black, 2:red, 3:green, 4:blue, 5:yellow, 6:magenta, 7:cyan, 8:dark green, 9:purple
+    const int LineStyle = 2;
+    // 1=line,2=broken,3=dotted,4=broken-dot,5=long-broken-dot
+    const int LineWidth = 8;
+
+    double xShift = 0;
+    double yShift = 0;
+
+
+    if (config == "inj")
+    {
+        xShift = -0.3;
+        yShift = 0.7;
+    }
+    else if (config == "ent")
+    {
+        xShift = 0;
+        yShift = 0;
+    }
+
+    // キューブ左側
+    TLine* line1 = new TLine(low_x + xShift, low_y + yShift, low_x + xShift, upp_y + yShift);
+    line1->SetLineColor(lineColor);
+    line1->SetLineWidth(LineWidth);
+    line1->SetLineStyle(LineStyle);
+    // キューブ右側
+    TLine* line2 = new TLine(upp_x + xShift, low_y + yShift, upp_x + xShift, upp_y + yShift);
+    line2->SetLineColor(lineColor);
+    line2->SetLineWidth(LineWidth);
+    line2->SetLineStyle(LineStyle);
+    // キューブ上側
+    TLine* line3 = new TLine(low_x + xShift, upp_y + yShift, upp_x + xShift, upp_y + yShift);
+    line3->SetLineColor(lineColor);
+    line3->SetLineWidth(LineWidth);
+    line3->SetLineStyle(LineStyle);
+    // キューブ下側
+    TLine* line4 = new TLine(low_x + xShift, low_y + yShift, upp_x + xShift, low_y + yShift);
+    line4->SetLineColor(lineColor);
+    line4->SetLineWidth(LineWidth);
+    line4->SetLineStyle(LineStyle);
+    // ファイバー縦方向の左側
+    TLine* line5 = new TLine(low_fiber_pos + xShift, low_y + yShift, low_fiber_pos + xShift, upp_y + yShift);
+    line5->SetLineColor(lineColor);
+    line5->SetLineWidth(LineWidth);
+    line5->SetLineStyle(LineStyle);
+    // ファイバー縦方向の右側
+    TLine* line6 = new TLine(upp_fiber_pos + xShift, low_y + yShift, upp_fiber_pos + xShift, upp_y + yShift);
+    line6->SetLineColor(lineColor);
+    line6->SetLineWidth(LineWidth);
+    line6->SetLineStyle(LineStyle);
+    // ファイバー横方向の下側
+    TLine* line7 = new TLine(low_x + xShift, low_fiber_pos + yShift, upp_x + xShift, low_fiber_pos + yShift);
+    line7->SetLineColor(lineColor);
+    line7->SetLineWidth(LineWidth);
+    line7->SetLineStyle(LineStyle);
+    // ファイバー横方向の上側
+    TLine* line8 = new TLine(low_x + xShift, upp_fiber_pos + yShift, upp_x + xShift, upp_fiber_pos + yShift);
+    line8->SetLineColor(lineColor);
+    line8->SetLineWidth(LineWidth);
+    line8->SetLineStyle(LineStyle);
+
+    TEllipse* circle = new TEllipse(low_x + center_pos + xShift, low_y + center_pos + yShift, Zradius, Zradius);
+    circle->SetLineColor(lineColor);
+    circle->SetLineWidth(4);
+    circle->SetLineStyle(2);
+    // circle->SetLineWidth(LineWidth);
+    // circle->SetLineStyle(LineStyle);
+    circle->SetFillColorAlpha(0, 0);
+
+
+    line1->Draw();
+    line2->Draw();
+    line3->Draw();
+    line4->Draw();
+    line5->Draw();
+    line6->Draw();
+    line7->Draw();
+    line8->Draw();
+    circle->Draw();
+}
+
 void changeStatsBoxSize(TH1* hist, double x1, double x2, double y1, double y2)
 {
     gPad->Update();
@@ -81,7 +184,7 @@ void SaveHist(TH1* hist, TString outputFileDir, TString drawOption = "", bool se
     canvas->Clear();
 }
 
-void SaveHodoMap(TH2* hist, TString outputFileDir, int nCellOneSide)
+void SaveHodoMap(TH2* hist, TString outputFileDir, int nCellOneSide, bool cubeLine = false)
 {
     TCanvas* canvas = new TCanvas("canvas", "", 1280, 1200);
     hist->Draw("text colz");
@@ -90,6 +193,7 @@ void SaveHodoMap(TH2* hist, TString outputFileDir, int nCellOneSide)
     gPad->SetRightMargin(0.17);
     hist->GetZaxis()->SetTitleOffset(1.4);
     hist->SetStats(kFALSE);
+    drawCubeLine();
     canvas->SaveAs(outputFileDir);
     canvas->Clear();
 }
@@ -117,6 +221,8 @@ void changeOptionFit(TH1* hist, int option)
     st->SetOptFit(option);
     st->Draw();
 }
+
+
 
 // inputMode
 // "point": 点線源
@@ -217,8 +323,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         histName = TString::Format("hCrosstalkMap%s", CubeGeometryNameAround[i].c_str());
         histAxis = TString::Format("Crosstalk ratio %s/center (using Z readout);Cell # along X;Cell # along Y;Crosstalk ratio (%%)", CubeGeometryTitleAround[i].c_str());
         hCrosstalkMap[i] = new TH2D(histName, histAxis, NCellOneSide, MinCellMap, MaxCellMap, NCellOneSide, MinCellMap, MaxCellMap);
-        // hCrosstalkMap[i]->SetMinimum(MinCTCellMap);
-        // hCrosstalkMap[i]->SetMaximum(MaxCTCellMap);
+        hCrosstalkMap[i]->SetMinimum(MinCTCellMap);
+        hCrosstalkMap[i]->SetMaximum(MaxCTCellMap);
 
         // Scatter plot of crosstalk
         scatterCTZ[i] = new TGraph();
@@ -226,6 +332,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         histName = TString::Format("hCrosstalkScatterZ%s", CubeGeometryNameAround[i].c_str());
         histAxis = TString::Format("L.Y. center vs %s (using Z readout);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
+        // hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPEAround, MinPEAround, MaxPEAround);
 
         for (int cellX = 0; cellX < NCellOneSide; cellX++)
         {
@@ -336,7 +443,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             if (inputMode == "plane" || inputMode == "beam")
             {
                 // z=0ならばキューブにヒットしたなかったイベントなのでcontinue
-                if(posCubeIn[2] == 0 || posCubeOut[2] == 0)
+                if (posCubeIn[2] == 0 || posCubeOut[2] == 0)
                 {
                     // cout << "evt" << allevt << " is skipped (Beam is not hit to the cube)." << endl;
                     ++allevt;
@@ -387,7 +494,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             hCellHitMapStraight->Fill(get<0> (histPosHit), get<1> (histPosHit));
 
             // center cube
-            if(goodEventForOverallCrosstalk)
+            if (goodEventForOverallCrosstalk)
             {
                 hPEZCenter->Fill(peZCenter);
             }
@@ -417,7 +524,12 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 {
                     hCrosstalkZ[i]->Fill((double) peZAround[i] / (double) peZCenter);
                 }
-                hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
+                // Temporary
+                if ((double) peZAround[i] / (double) peZCenter < 0.3)
+                {
+                    hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
+                }
+
 
 
                 if (hittimeZAround[i] != 0.0)
@@ -466,7 +578,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     // Draw histograms
     TString outputFileDir = TString::Format("%s/PECenter.%s", ResultDir.c_str(), outputFileType.c_str());
     double maxBin = hPEZCenter->GetMaximumBin() + MinPECenter;
-    hPEZCenter->Fit("landau", "", "", maxBin-7, maxBin+12);
+    hPEZCenter->Fit("landau", "", "", maxBin - 7, maxBin + 12);
     changeStatsBoxSize(hPEZCenter, 0.65, 0.98, 0.65, 0.92);
     changeOptionStat(hPEZCenter, 10);
     changeOptionFit(hPEZCenter, 110);
@@ -496,8 +608,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // changeOptionStat(hCrosstalkScatterZ[i], 0);
         SaveHist(hCrosstalkScatterZ[i], outputFileDir, "colz");
 
-        outputFileDir = TString::Format("%s/CrosstalkMap%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        SaveHodoMap(hCrosstalkMap[i], outputFileDir, NCellOneSide);
+
 
         outputFileDir = TString::Format("%s/HitTimeAround%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         SaveHist(hHitTimeZAround[i], outputFileDir);
@@ -526,6 +637,24 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     SaveHist(hPgunX, outputFileDir);
     outputFileDir = TString::Format("%s/PgunY.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHist(hPgunY, outputFileDir);
+
+    // TH2Dの色を赤にする
+    const Int_t NRGBs = 3;
+    const Int_t NCont = 255;
+
+    double stops[NRGBs] = { 0.00, .50, 1.00 };
+    double red[NRGBs] = { 1.00, 1.0, 1.00 };
+    double green[NRGBs] = { 1.00, 0.0, 0.00 };
+    double blue[NRGBs] = { 1.00, 0.0, 0.00 };
+    TColor::CreateGradientColorTable(2, stops, red, green, blue, NCont);
+    gStyle->SetNumberContours(NCont);
+
+    for (int i = 0; i < NChZAround; i++)
+    {
+        outputFileDir = TString::Format("%s/CrosstalkMap%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
+        SaveHodoMap(hCrosstalkMap[i], outputFileDir, NCellOneSide, true);
+        // TODO: 色を赤にする　キューブの位置書く
+    }
 }
 
 int main(int argc, char** argv)
@@ -555,9 +684,9 @@ int main(int argc, char** argv)
 
     if (argc == 3)
     {
-        if(inputMode == "plane" || inputMode == "beam")
+        if (inputMode == "plane" || inputMode == "beam")
         {
-            cerr << "Number of cell should be set when input mode is plane or beam!" << endl;;
+            cerr << "Number of cell should be set when input mode is plane or beam!" << endl;
             return 1;
         }
         optSimAnalysis(rootFileDirectory, inputMode, 0);
