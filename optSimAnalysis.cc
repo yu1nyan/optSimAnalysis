@@ -218,6 +218,10 @@ void changeOptionFit(TH1* hist, int option)
 {
     gPad->Update();
     TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
+    if(!st)
+    {
+        return;
+    }
     st->SetOptFit(option);
     st->Draw();
 }
@@ -506,14 +510,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             // cubes around
             for (int i = 0; i < NChZAround; i++)
             {
-                hPEZAround[i]->Fill(peZAround[i]);
-
                 // crosstalk
-                if (goodEventForOverallCrosstalk)
-                {
-                    // scatterCTZ[i]->SetPoint(allevt, peZCenter, peZAround[i]);
-                    hCrosstalkScatterZ[i]->Fill(peZCenter, peZAround[i]);
-                }
                 hCrosstalkScatterZEachCell[i][cellX][cellY]->Fill(peZCenter, peZAround[i]);
                 if (peZCenter == 0)
                 {
@@ -522,10 +519,14 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                 }
                 if (goodEventForOverallCrosstalk)
                 {
+                    hPEZAround[i]->Fill(peZAround[i]);
                     hCrosstalkZ[i]->Fill((double) peZAround[i] / (double) peZCenter);
+                    // scatterCTZ[i]->SetPoint(allevt, peZCenter, peZAround[i]);
+                    hCrosstalkScatterZ[i]->Fill(peZCenter, peZAround[i]);
+
                 }
                 // Temporary
-                if ((double) peZAround[i] / (double) peZCenter < 0.3)
+                if (true || (double) peZAround[i] / (double) peZCenter < 0.3)
                 {
                     hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
                 }
@@ -591,10 +592,17 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     for (int i = 0; i < NChZAround; i++)
     {
         outputFileDir = TString::Format("%s/PEAround%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
+        hPEZAround[i]->Draw();
+        changeOptionStat(hPEZAround[i], 2210);
+        changeStatsBoxSize(hPEZAround[i], 0.6, 0.99, 0.65, 0.935);
         SaveHist(hPEZAround[i], outputFileDir);
 
         outputFileDir = TString::Format("%s/Crosstalk%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
+        hCrosstalkZ[i]->Draw();
+        changeOptionStat(hCrosstalkZ[i], 2210);
+        changeStatsBoxSize(hCrosstalkZ[i], 0.6, 0.99, 0.65, 0.935);
         SaveHist(hCrosstalkZ[i], outputFileDir, "", true);
+
 
         // outputFileDir = TString::Format("%s/CrosstalkScatterPlot%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         // SaveGraph(scatterCTZ[i], outputFileDir);
