@@ -15,10 +15,6 @@ const string CubeGeometryTitleAround[] = { "upper left", "upper", "upper right",
 
 const string histNameZHitTime = "hittimez";
 
-const string histNameTrueOptical = "trueoptctrosstalk";
-const string histNameDeltaRay = "deltaray";
-const string histNameCherenkov = "fibercherenkov";
-
 const string histNameCubeIn = "cubeinpos";
 const string histNameCubeOut = "cubeoutpos";
 

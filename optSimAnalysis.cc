@@ -156,8 +156,6 @@ void changeStatsBoxSize(TH1* hist, double x1, double x2, double y1, double y2)
 {
     gPad->Update();
     TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
-    if(!st)
-        return;
     st->SetX1NDC(x1);
     st->SetX2NDC(x2);
     st->SetY1NDC(y1);
@@ -212,8 +210,6 @@ void changeOptionStat(TH1* hist, int option)
 {
     gPad->Update();
     TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
-    if(!st)
-        return;
     st->SetOptStat(option);
     st->Draw();
 }
@@ -222,13 +218,15 @@ void changeOptionFit(TH1* hist, int option)
 {
     gPad->Update();
     TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
-    if (!st)
+    if(!st)
     {
         return;
     }
     st->SetOptFit(option);
     st->Draw();
 }
+
+
 
 // inputMode
 // "point": 点線源
@@ -288,24 +286,15 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     TH2D* hCellHitMapStraight = new TH2D("hCellHitMap", "Cell hitmap with straight beam events;Cell # along X;Cell # along Y;Number of events", NCellOneSide, MinCellMap, MaxCellMap, NCellOneSide, MinCellMap, MaxCellMap);
 
     // Light yield
-    TH1I* hPEZCenter = new TH1I("hPECenter", "Light yield of center cube (using Z readout);Light yield (p.e.);Number of events", NBinPECenter, MinPECenter, MaxPECenter);
-    TH1I* hPEZAround[NChZAround];
-    TH1I* hPEZAroundDeltaRay[NChZAround];
-    TH1I* hPEZAroundCherenkov[NChZAround];
-    TH1I* hPEZAroundTrueOpt[NChZAround];
+    TH1D* hPEZCenter = new TH1D("hPECenter", "Light yield of center cube (using Z readout);Light yield (p.e.);Number of events", NBinPECenter, MinPECenter, MaxPECenter);
+    TH1D* hPEZAround[NChZAround];
 
     // crosstalk
     TH1D* hCrosstalkZ[NChZAround];
-    // TH1D* hCrosstalkZDeltaRay[NChZAround];
-    // TH1D* hCrosstalkZCherenkov[NChZAround];
-    // TH1D* hCrosstalkZTrueOpt[NChZAround];
     TH1D* hCrosstalkZEachCell[NChZAround][NCellOneSide][NCellOneSide];
     TH2D* hCrosstalkMap[NChZAround];
     TGraph* scatterCTZ[NChZAround];
     TH2D* hCrosstalkScatterZ[NChZAround];
-    TH2D* hCrosstalkScatterZDeltaRay[NChZAround];
-    TH2D* hCrosstalkScatterZCherenkov[NChZAround];
-    TH2D* hCrosstalkScatterZTrueOpt[NChZAround];
     TH2D* hCrosstalkScatterZEachCell[NChZAround][NCellOneSide][NCellOneSide];
 
     // hit time
@@ -318,33 +307,12 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // Light yield
         TString histName = TString::Format("hPE%s", CubeGeometryNameAround[i].c_str());
         TString histAxis = TString::Format("Light yield of %s cube (using Z readout);Light yield (p.e.);Number of events", CubeGeometryTitleAround[i].c_str());
-        hPEZAround[i] = new TH1I(histName, histAxis, NBinPEAround, MinPEAround, MaxPEAround);
-
-        histName = TString::Format("hPEDeltaRay%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("Light yield of %s cube (using Z readout, w/ delta-ray events);Light yield (p.e.);Number of events", CubeGeometryTitleAround[i].c_str());
-        hPEZAroundDeltaRay[i] = new TH1I(histName, histAxis, NBinPEAround, MinPEAround, MaxPEAround);
-
-        histName = TString::Format("hPECherenkov%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("Light yield of %s cube (using Z readout, w/ Cherenkov in fiber events);Light yield (p.e.);Number of events", CubeGeometryTitleAround[i].c_str());
-        hPEZAroundCherenkov[i] = new TH1I(histName, histAxis, NBinPEAround, MinPEAround, MaxPEAround);
-
-        histName = TString::Format("hPETrueOpt%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("Light yield of %s cube (using Z readout, w/ true optical crosstalk events);Light yield (p.e.);Number of events", CubeGeometryTitleAround[i].c_str());
-        hPEZAroundTrueOpt[i] = new TH1I(histName, histAxis, NBinPEAround, MinPEAround, MaxPEAround);
+        hPEZAround[i] = new TH1D(histName, histAxis, NBinPEAround, MinPEAround, MaxPEAround);
 
         // Crosstalk
         histName = TString::Format("hCrosstalk%s", CubeGeometryNameAround[i].c_str());
         histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);L.Y. %s/center (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hCrosstalkZ[i] = new TH1D(histName, histAxis, NBinCT, MinCT, MaxCT);
-        // histName = TString::Format("hCrosstalk%sDeltaRay", CubeGeometryNameAround[i].c_str());
-        // histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);L.Y. %s/center (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        // hCrosstalkZDeltaRay[i] = new TH1D(histName, histAxis, NBinCT, MinCT, MaxCT);
-        // histName = TString::Format("hCrosstalk%sCherenkov", CubeGeometryNameAround[i].c_str());
-        // histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);L.Y. %s/center (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        // hCrosstalkZCherenkov[i] = new TH1D(histName, histAxis, NBinCT, MinCT, MaxCT);
-        // histName = TString::Format("hCrosstalk%sTrueOpt", CubeGeometryNameAround[i].c_str());
-        // histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);L.Y. %s/center (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        // hCrosstalkZTrueOpt[i] = new TH1D(histName, histAxis, NBinCT, MinCT, MaxCT);
         for (int cellX = 0; cellX < NCellOneSide; cellX++)
         {
             for (int cellY = 0; cellY < NCellOneSide; cellY++)
@@ -369,18 +337,6 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         histAxis = TString::Format("L.Y. center vs %s (using Z readout);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
         // hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPEAround, MinPEAround, MaxPEAround);
-
-        histName = TString::Format("hCrosstalkScatterZDeltaRay%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("L.Y. center vs %s (using Z readout, w/ delta-ray events);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        hCrosstalkScatterZDeltaRay[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
-
-        histName = TString::Format("hCrosstalkScatterZCherenkov%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("L.Y. center vs %s (using Z readout, w/ Cherenkov in fiber events);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        hCrosstalkScatterZCherenkov[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
-
-        histName = TString::Format("hCrosstalkScatterZTrueOpt%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("L.Y. center vs %s (using Z readout, w/ true optical crosstalk events);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
-        hCrosstalkScatterZTrueOpt[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
 
         for (int cellX = 0; cellX < NCellOneSide; cellX++)
         {
@@ -447,21 +403,15 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         }
 
         // ツリーの中身を取り出せるように設定
-        int peZCenter;
+        double peZCenter;
         double hittimeZCenter;
         tree->SetBranchAddress((histNameZNPE + histNameZNumberCenter).c_str(), &peZCenter);
         tree->SetBranchAddress((histNameZHitTime + histNameZNumberCenter).c_str(), &hittimeZCenter);
-        int peZAround[NChZAround];
-        int peZAroundDeltaRay[NChZAround];
-        int peZAroundCherenkov[NChZAround];
-        int peZAroundTrueOpt[NChZAround];
+        double peZAround[NChZAround];
         double hittimeZAround[NChZAround];
         for (int i = 0; i < NChZAround; i++)
         {
-            tree->SetBranchAddress(histNameZAround[i].c_str(), &peZAround[i]);
-            tree->SetBranchAddress((histNameZAround[i] + histNameDeltaRay).c_str(), &peZAroundDeltaRay[i]);
-            tree->SetBranchAddress((histNameZAround[i] + histNameCherenkov).c_str(), &peZAroundCherenkov[i]);
-            tree->SetBranchAddress((histNameZAround[i] + histNameTrueOptical).c_str(), &peZAroundTrueOpt[i]);
+            tree->SetBranchAddress((histNameZNPE + histNameZNumberAround[i]).c_str(), &peZAround[i]);
             tree->SetBranchAddress((histNameZHitTime + histNameZNumberAround[i]).c_str(), &hittimeZAround[i]);
         }
 
@@ -574,26 +524,12 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                     // scatterCTZ[i]->SetPoint(allevt, peZCenter, peZAround[i]);
                     hCrosstalkScatterZ[i]->Fill(peZCenter, peZAround[i]);
 
-                    if(peZAroundDeltaRay[i] != -1)
-                    {
-                        hPEZAroundDeltaRay[i]->Fill(peZAroundDeltaRay[i]);
-                        hCrosstalkScatterZDeltaRay[i]->Fill(peZCenter, peZAroundDeltaRay[i]);
-                    }
-
-                    if(peZAroundCherenkov[i] != -1)
-                    {
-                        hPEZAroundCherenkov[i]->Fill(peZAroundCherenkov[i]);
-                        hCrosstalkScatterZCherenkov[i]->Fill(peZCenter, peZAroundCherenkov[i]);
-                    }
-
-                    if(peZAroundTrueOpt[i] != -1)
-                    {
-                        hPEZAroundTrueOpt[i]->Fill(peZAroundTrueOpt[i]);
-                        hCrosstalkScatterZTrueOpt[i]->Fill(peZCenter, peZAroundTrueOpt[i]);
-                    }
                 }
-
-                hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
+                // Temporary
+                if (true || (double) peZAround[i] / (double) peZCenter < 0.3)
+                {
+                    hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
+                }
 
 
 
@@ -661,25 +597,6 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         changeStatsBoxSize(hPEZAround[i], 0.6, 0.99, 0.65, 0.935);
         SaveHist(hPEZAround[i], outputFileDir);
 
-        outputFileDir = TString::Format("%s/PEAroundDeltaRay%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        hPEZAroundDeltaRay[i]->Draw();
-        changeOptionStat(hPEZAroundDeltaRay[i], 2210);
-        changeStatsBoxSize(hPEZAroundDeltaRay[i], 0.6, 0.99, 0.65, 0.935);
-        SaveHist(hPEZAroundDeltaRay[i], outputFileDir);
-
-        outputFileDir = TString::Format("%s/PEAroundCherenkov%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        hPEZAroundCherenkov[i]->Draw();
-        changeOptionStat(hPEZAroundCherenkov[i], 2210);
-        changeStatsBoxSize(hPEZAroundCherenkov[i], 0.6, 0.99, 0.65, 0.935);
-        SaveHist(hPEZAroundCherenkov[i], outputFileDir);
-
-        outputFileDir = TString::Format("%s/PEAroundTrueOpt%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        hPEZAroundTrueOpt[i]->Draw();
-        changeOptionStat(hPEZAroundTrueOpt[i], 2210);
-        changeStatsBoxSize(hPEZAroundTrueOpt[i], 0.6, 0.99, 0.65, 0.935);
-        SaveHist(hPEZAroundTrueOpt[i], outputFileDir);
-
-
         outputFileDir = TString::Format("%s/Crosstalk%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         hCrosstalkZ[i]->Draw();
         changeOptionStat(hCrosstalkZ[i], 2210);
@@ -695,28 +612,9 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         gPad->SetRightMargin(0.15);
         changeStatsBoxSize(hCrosstalkScatterZ[i], 0.55, 0.85, 0.6, 0.92);
         changeOptionStat(hCrosstalkScatterZ[i], 2210);
+        // changeOptionFit(hCrosstalkScatterZ, 111);
+        // changeOptionStat(hCrosstalkScatterZ[i], 0);
         SaveHist(hCrosstalkScatterZ[i], outputFileDir, "colz");
-
-        outputFileDir = TString::Format("%s/CrosstalkScatterHistDeltaRay%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        hCrosstalkScatterZDeltaRay[i]->Draw("colz");
-        gPad->SetRightMargin(0.15);
-        changeStatsBoxSize(hCrosstalkScatterZDeltaRay[i], 0.55, 0.85, 0.6, 0.92);
-        changeOptionStat(hCrosstalkScatterZDeltaRay[i], 2210);
-        SaveHist(hCrosstalkScatterZDeltaRay[i], outputFileDir, "colz");
-
-        outputFileDir = TString::Format("%s/CrosstalkScatterHistCherenkov%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        hCrosstalkScatterZCherenkov[i]->Draw("colz");
-        gPad->SetRightMargin(0.15);
-        changeStatsBoxSize(hCrosstalkScatterZCherenkov[i], 0.55, 0.85, 0.6, 0.92);
-        changeOptionStat(hCrosstalkScatterZCherenkov[i], 2210);
-        SaveHist(hCrosstalkScatterZCherenkov[i], outputFileDir, "colz");
-
-        outputFileDir = TString::Format("%s/CrosstalkScatterHistTrueOpt%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
-        hCrosstalkScatterZ[i]->Draw("colz");
-        gPad->SetRightMargin(0.15);
-        changeStatsBoxSize(hCrosstalkScatterZTrueOpt[i], 0.55, 0.85, 0.6, 0.92);
-        changeOptionStat(hCrosstalkScatterZTrueOpt[i], 2210);
-        SaveHist(hCrosstalkScatterZTrueOpt[i], outputFileDir, "colz");
 
 
 
