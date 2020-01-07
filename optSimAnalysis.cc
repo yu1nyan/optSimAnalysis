@@ -156,6 +156,10 @@ void changeStatsBoxSize(TH1* hist, double x1, double x2, double y1, double y2)
 {
     gPad->Update();
     TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
+    if(!st)
+    {
+        return;
+    }
     st->SetX1NDC(x1);
     st->SetX2NDC(x2);
     st->SetY1NDC(y1);
@@ -190,8 +194,9 @@ void SaveHodoMap(TH2* hist, TString outputFileDir, int nCellOneSide, bool cubeLi
     hist->Draw("text colz");
     hist->GetXaxis()->SetNdivisions(nCellOneSide);
     hist->GetYaxis()->SetNdivisions(nCellOneSide);
-    gPad->SetRightMargin(0.17);
-    hist->GetZaxis()->SetTitleOffset(1.4);
+    gPad->SetRightMargin(0.14);
+    hist->GetZaxis()->SetTitleOffset(1.1);
+    hist->SetMarkerSize(MarkerSizeTH2);
     hist->SetStats(kFALSE);
     drawCubeLine();
     canvas->SaveAs(outputFileDir);
@@ -210,6 +215,10 @@ void changeOptionStat(TH1* hist, int option)
 {
     gPad->Update();
     TPaveStats* st = (TPaveStats*) hist->FindObject("stats");
+    if(!st)
+    {
+        return;
+    }
     st->SetOptStat(option);
     st->Draw();
 }
@@ -311,7 +320,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
         // Crosstalk
         histName = TString::Format("hCrosstalk%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);L.Y. %s/center (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
+        histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);L.Y. %s/center;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hCrosstalkZ[i] = new TH1D(histName, histAxis, NBinCT, MinCT, MaxCT);
         for (int cellX = 0; cellX < NCellOneSide; cellX++)
         {
@@ -325,7 +334,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
         // Crosstalk map
         histName = TString::Format("hCrosstalkMap%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("Crosstalk ratio %s/center (using Z readout);Cell # along X;Cell # along Y;Crosstalk ratio (%%)", CubeGeometryTitleAround[i].c_str());
+        histAxis = TString::Format("L.Y. ratio %s/center (using Z readout);Cell # along X;Cell # along Y;L.Y. ratio (%%)", CubeGeometryTitleAround[i].c_str());
         hCrosstalkMap[i] = new TH2D(histName, histAxis, NCellOneSide, MinCellMap, MaxCellMap, NCellOneSide, MinCellMap, MaxCellMap);
         hCrosstalkMap[i]->SetMinimum(MinCTCellMap);
         hCrosstalkMap[i]->SetMaximum(MaxCTCellMap);
@@ -334,7 +343,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         scatterCTZ[i] = new TGraph();
 
         histName = TString::Format("hCrosstalkScatterZ%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("L.Y. center vs %s (using Z readout);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
+        histAxis = TString::Format("L.Y. center vs %s (using Z readout);L.Y. center (p.e.);L.Y. %s (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
         // hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPEAround, MinPEAround, MaxPEAround);
 
@@ -525,11 +534,8 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
                     hCrosstalkScatterZ[i]->Fill(peZCenter, peZAround[i]);
 
                 }
-                // Temporary
-                if (true || (double) peZAround[i] / (double) peZCenter < 0.3)
-                {
-                    hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
-                }
+
+                hCrosstalkZEachCell[i][cellX][cellY]->Fill((double) peZAround[i] / (double) peZCenter);
 
 
 
@@ -577,7 +583,13 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
 
     // Draw histograms
-    TString outputFileDir = TString::Format("%s/PECenter.%s", ResultDir.c_str(), outputFileType.c_str());
+    TString outputFileDir;
+    outputFileDir = TString::Format("%s/CellHitMapStraight.%s", ResultDir.c_str(), outputFileType.c_str());
+    SaveHodoMap(hCellHitMapStraight, outputFileDir, NCellOneSide);
+
+    gStyle->SetPaintTextFormat("3.2f");
+
+    outputFileDir = TString::Format("%s/PECenter.%s", ResultDir.c_str(), outputFileType.c_str());
     double maxBin = hPEZCenter->GetMaximumBin() + MinPECenter;
     hPEZCenter->Fit("landau", "", "", maxBin - 7, maxBin + 12);
     changeStatsBoxSize(hPEZCenter, 0.65, 0.98, 0.65, 0.92);
@@ -638,8 +650,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         // }
     }
 
-    outputFileDir = TString::Format("%s/CellHitMapStraight.%s", ResultDir.c_str(), outputFileType.c_str());
-    SaveHodoMap(hCellHitMapStraight, outputFileDir, NCellOneSide);
+
 
     outputFileDir = TString::Format("%s/PgunX.%s", ResultDir.c_str(), outputFileType.c_str());
     SaveHist(hPgunX, outputFileDir);
