@@ -43,3 +43,4 @@ const double CubeEdgeZup = 5.0;
 const double CubeEdgeZdown = -5.0;
 
 const double StatsBoxSize[] = {0.65, 0.98, 0.65, 0.92};
+const double MarkerSizeTH2 = 2.2;
