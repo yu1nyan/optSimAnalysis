@@ -343,7 +343,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         scatterCTZ[i] = new TGraph();
 
         histName = TString::Format("hCrosstalkScatterZ%s", CubeGeometryNameAround[i].c_str());
-        histAxis = TString::Format("L.Y. center vs %s (using Z readout);L.Y. center (p.e.);L.Y. %s (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
+        histAxis = TString::Format("L.Y. %s vs center (using Z readout);L.Y. center (p.e.);L.Y. %s (p.e.);Number of events", CubeGeometryTitleAround[i].c_str(), CubeGeometryTitleAround[i].c_str());
         hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
         // hCrosstalkScatterZ[i] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPEAround, MinPEAround, MaxPEAround);
 
@@ -352,7 +352,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
             for (int cellY = 0; cellY < NCellOneSide; cellY++)
             {
                 histName = TString::Format("hCrosstalkScatterZ%sX%dY%d", CubeGeometryNameAround[i].c_str(), cellX, cellY);
-                histAxis = TString::Format("L.Y. center vs %s (using Z readout, Cell X=%d, Y=%d);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), cellX, cellY, CubeGeometryTitleAround[i].c_str());
+                histAxis = TString::Format("L.Y. %s vs center (using Z readout, Cell X=%d, Y=%d);L.Y. center;L.Y. %s;Number of events", CubeGeometryTitleAround[i].c_str(), cellX, cellY, CubeGeometryTitleAround[i].c_str());
                 hCrosstalkScatterZEachCell[i][cellX][cellY] = new TH2D(histName, histAxis, NBinPECenter, MinPECenter, MaxPECenter, NBinPECenter, MinPECenter, MaxPECenter);
             }
         }
