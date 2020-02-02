@@ -412,11 +412,11 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
         }
 
         // ツリーの中身を取り出せるように設定
-        double peZCenter;
+        int peZCenter;
         double hittimeZCenter;
         tree->SetBranchAddress((histNameZNPE + histNameZNumberCenter).c_str(), &peZCenter);
         tree->SetBranchAddress((histNameZHitTime + histNameZNumberCenter).c_str(), &hittimeZCenter);
-        double peZAround[NChZAround];
+        int peZAround[NChZAround];
         double hittimeZAround[NChZAround];
         for (int i = 0; i < NChZAround; i++)
         {
