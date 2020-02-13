@@ -167,7 +167,7 @@ void changeStatsBoxSize(TH1* hist, double x1, double x2, double y1, double y2)
     st->Draw();
 }
 
-void SaveHist(TH1* hist, TString outputFileDir, TString drawOption = "", bool setLogy = false, int histWidth = 0, int histHeight = 0)
+void SaveHist(TH1* hist, TString outputFileDir, TString drawOption = "", bool setLogy = false, int histWidth = 0, int histHeight = 0, bool addText = false)
 {
     TCanvas* canvas;
     if (histWidth == 0 || histHeight == 0)
@@ -184,6 +184,10 @@ void SaveHist(TH1* hist, TString outputFileDir, TString drawOption = "", bool se
         canvas->SetLogy();
     }
     hist->Draw(drawOption);
+    if(addText)
+    {
+        hist->Draw("same text90");
+    }
     canvas->SaveAs(outputFileDir);
     canvas->Clear();
 }
@@ -603,11 +607,13 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
 
     for (int i = 0; i < NChZAround; i++)
     {
+        gStyle->SetPaintTextFormat("3.0f");
         outputFileDir = TString::Format("%s/PEAround%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
+        hPEZAround[i]->SetMarkerSize(2.0);
         hPEZAround[i]->Draw();
         changeOptionStat(hPEZAround[i], 2210);
         changeStatsBoxSize(hPEZAround[i], 0.6, 0.99, 0.65, 0.935);
-        SaveHist(hPEZAround[i], outputFileDir);
+        SaveHist(hPEZAround[i], outputFileDir, "", false, 0, 0, true);
 
         outputFileDir = TString::Format("%s/Crosstalk%d.%s", ResultDir.c_str(), i, outputFileType.c_str());
         hCrosstalkZ[i]->Draw();
@@ -667,6 +673,7 @@ void optSimAnalysis(string rootFileDirectory, string inputMode, int nCellOneSide
     double blue[NRGBs] = { 1.00, 0.0, 0.00 };
     TColor::CreateGradientColorTable(2, stops, red, green, blue, NCont);
     gStyle->SetNumberContours(NCont);
+    gStyle->SetPaintTextFormat("3.2f");
 
     for (int i = 0; i < NChZAround; i++)
     {
